@@ -62,8 +62,8 @@ Detail in `spike-definitions.md`, Callers: rows 6 and 11.
 
 Would cover:
 
-- Call edges for applications, qualifier set from the module path, behind a refusal for
-  qualifiers that key nothing (shape to agree with the maintainers first).
+- Call edges for applications, qualifier set from the module path, only once the shared
+  refusal (slice 6a) is in place for qualifiers that key nothing.
 - Vendored tree-sitter-ocaml v0.26.0 pinned by SHA, one `Lang::OCaml`, `.ml` and `.mli` query
   sets (the spike shape).
 - Definitions with module scopes: nested `module X = struct` and the file module.
@@ -98,17 +98,18 @@ and Gleam's (closed, #64). Why Gleam closed was not checked.
 ## Effort, in pieces rather than days
 
 Done in the spike: grammar vendoring, Lang wiring at 14 sites, definition queries, scopes
-(53 lines), call captures (36 lines). Left for a definitions PR: the pre-parse guard and its gate, the shared walker refactor,
-fixtures and gates, the pre-review checklist. Builds take 6 to 8 minutes on this machine, so
+(53 lines), call captures (36 lines). Left for a definitions PR: the pre-parse guard and its
+gate, the shared walker refactor, fixtures and gates, the pre-review checklist. Builds take 6 to 8 minutes on this machine, so
 each gate iteration costs that. No day estimate: nothing here measured one.
 
 ## Decision path
 
 1. Done: rows 6 and 11 measured. Neither clean nor noise: right where the qualifier keys a
    scope, wrong where it names a functor application.
-2. Ask on #377 whether a qualified call that keys nothing can be refused for OCaml before 6a
-   lands, or whether call edges wait for 6a. Until that is answered, a definitions-only PR is
-   the safe first step, and call edges can follow.
+2. Ask on #377 whether the shared refusal (slice 6a) can land with OCaml call-edge support.
+   An OCaml-only guard is not an option: upstream refuses per-language guards
+   (`upstream-rules.md`). If 6a cannot come first, call edges wait for it, and a
+   definitions-only PR goes alone.
 3. Either way, comment on #377 first asking for the starting files (the maintainer offered),
    and propose the table-driven scope walker before writing it. Draft → `/pr-voice` → Bruno.
 4. Separately, report the grammar robustness issue to tree-sitter-ocaml.
