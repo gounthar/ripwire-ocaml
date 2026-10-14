@@ -126,3 +126,32 @@ recall only.
 Not yet known: which construct makes the parser lose sync. The `b40405f` recipe in
 `~/.claude/CLAUDE.md` says "definitions only", which reads as complete for definitions. It is
 not, and the recipe should say so.
+
+## git grep for definitions (the real bar)
+
+A second side review: ctags is too easy a bar, since the `let NAME` grep used to build the key
+found nearly every definition. Scored [ran it] with the exact fallback now in the
+claude-config recipe (PR #305, `0eb6aff`):
+`git grep -nE '^\s*(let|and) (rec )?SYM\b' -- 'ocaml/*.ml' 'ocaml/*.mli'`.
+
+| row | found | hits | | row | found | hits |
+|---|---|---|---|---|---|---|
+| 1 | yes | 1 | | 11 | yes | 18 |
+| 2 | yes | 1 | | 12 | yes | 1 |
+| 3 | yes | 1 | | 13 | yes | 2 |
+| 4 | yes | 17 | | 14 | no (record field) | 1 |
+| 5 | yes | 2 | | 15 | yes | 1 |
+| 6 | yes | 107 | | 16 | yes | 1 |
+| 8 | yes | 4 | | 17 | yes | 1 |
+| 9 | no (`module`, not `let`) | 0 | | 19 | yes | 1 |
+| 10 | yes | 17 | | | | |
+
+Recall 15 of 17, against ctags' 9. Both misses are the pattern's shape (`module Brctl`,
+a `; extra_backend_keys:` field), and `module NAME` / `NAME:` variants would catch them.
+
+So grep is the bar, and where it falls down is **noise, not recall**: rows 4, 6, 10 and 11
+return 17, 107, 17 and 18 candidates for a name the user typed qualified
+(`Device.Generic.hard_shutdown`, `PV_Vnc.start`, `Xapi_vdi.update_allowed_operations`).
+Narrowing those to the one right definition, and the caller rows, is what OCaml support in
+ripwire would have to add. The go/no-go note should score ripwire against grep on those
+rows, not against ctags.
