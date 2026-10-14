@@ -125,11 +125,9 @@ matched nothing, `Xapi_vdi.update_allowed_operations` matched). `kParserVer` is 
 placeholder 901, so the cache serves records from the scopeless build [inferred from the
 `--no-cache` runs being consistent]. A PR bumps it.
 
-**Callers: nothing to measure yet.** `--callers=Xapi_vdi::update_allowed_operations` finds both
-defs and returns `count="0"`, because the spike captures no references at all. So the caller
-rows (6, 11), where grep returns 782 and 179 hits, are still unmeasured. That needs call
-captures in `tags.scm` plus the qualifier on the reference side, the slice-6b question in
-`upstream-rules.md`.
+**Callers: nothing to measure yet** at this commit. `--callers=Xapi_vdi::update_allowed_operations`
+found both defs and returned `count="0"`, because the spike captured no references. Measured in
+the next section.
 
 **Data vs C++.** The maintainer asked for shared mechanisms over per-language C++. Scope is
 per-language C++ today: Rust, Kotlin and Ruby each have a walker on `main` (`ingest_names.h`
@@ -137,6 +135,68 @@ per-language C++ today: Rust, Kotlin and Ruby each have a walker on `main` (`ing
 and Kotlin walkers are identical up to two strings (ancestor kind, name-child kind), so a shared
 table-driven walker is a mechanism a PR could offer. The file-module scope has no node to read
 and stays a special case.
+
+## Callers: rows 6 and 11
+
+Spike commit `8df054f6` on top of `56e64633`: 36 added lines in three files [ran it, `git diff --stat`].
+
+- `queries/ocaml/tags.scm`: `(application_expression function: (value_path (value_name) @name))
+  @reference.call`. Bare `f x` and qualified `M.f x`. Not captured: `x |> M.f`, `M.f` passed
+  as a value, `M.(f x)` local opens, method calls `o#m`.
+- `ocamlQualifierOf` (`ingest_names.h`) and an OCaml arm next to Rust's in `ingest_sidecap.h`:
+  the immediate module of the `value_path` becomes the reference's qualifier
+  (`Service.PV_Vnc.start` gives `PV_Vnc`). No `open`, alias or functor rewriting. The resolver
+  is untouched: a qualified ref goes through the existing `qualifier::name` canonical tier,
+  and falls to the bare-name ladder when that keys nothing.
+- Rebuild, incremental, WSL2 x86_64 native, gcc 14.2, `-j6`, bash `time`: 8m6.3s wall,
+  10m59.6s user, 20.1s sys [ran it].
+
+Scored [ran it] with `--callers=SEL --no-cache` and `--uses=SEL --no-cache` against the answer
+key in `baseline-lookups.md`. Each query takes 2.2 to 2.8 s wall, indexing included. The
+resolver's edges are function to function, so a caller is scored as a function, then checked
+against the key's sites. Four buckets: **correct**, **wrongly bound** (an edge to the target that
+the source does not make), **refused** (a call captured but left unbound, `declined_calls=`),
+**missed** (a key site the query never captured, which is the query's fault, not the resolver's).
+
+| row | target | callers returned | correct | wrongly bound | refused | missed |
+|---|---|---|---|---|---|---|
+| 6 | `PV_Vnc::start` | 3 | 1 (`xenops_server_xen.ml:2713`) | **2** | 2 calls (`declined_calls=2`, not identified) | 0 |
+| 11 | `Xapi_vdi::update_allowed_operations` | 19 (15 + 4 test) | 19, covering all 16 + 7 test key sites | 0 | 0 reported | 0 |
+
+**Row 11 is clean.** The 9 qualified calls bind to the right definition [ran it], through the
+canonical tier [inferred: `Xapi_vdi::update_allowed_operations` is keyed, and the decoys below bind
+to their own keys]. The 7 unqualified calls inside `xapi_vdi.ml` also bind correctly; how the ladder
+picked the right one of 27 same-named definitions was not traced. The decoy at `xapi_vdi.ml:1108`, `Xapi_sr_operations.update_allowed_operations`,
+binds to its own target: `clone` is listed as a caller of `Xapi_sr_operations::update_allowed_operations`
+[ran it].
+
+**Row 6's two wrong edges** are `Varstored.start` (`service.ml:685`) and `Swtpm.start` (`:778`).
+They call `Xenops_sandbox.Varstore_guard.start` and `Swtpm_guard.start`. Both modules are functor
+applications (`xenops_sandbox.ml:237-238`, `module Varstore_guard = Guard (Varstored)`), so no
+definition is keyed `Varstore_guard::start`; the real one is `Guard`'s, at `xenops_sandbox.ml:158`.
+The canonical tier keys nothing, the ref falls to the bare-name ladder, and the ladder picks
+`PV_Vnc.start`. This is the gap `upstream-rules.md` predicted (slice 6a) and the first measured
+instance of it.
+
+How often that path is taken: `xen-api` `ocaml/*.ml` holds 765 functor-application modules
+(`module X = F (Y)`) and 520 plain aliases (`module X = Y.Z`) [ran it, `git grep -E` on the line
+shape, so a lower bound: multi-line forms are not counted]. A call qualified by any of them
+ladders the same way. How many such calls bind wrongly, as opposed to being declined, was not
+measured.
+
+**`--uses` prints sites from the same function, not the same binding.** `--uses=Xapi_vdi::update_allowed_operations`
+returns 31 sites: the 23 in the key plus 8 calls to other modules' `update_allowed_operations`
+(`Xapi_vbd_helpers`, `Xapi_vif_helpers`, `Xapi_vusb_helpers`, `Xapi_vm_lifecycle`,
+`Xapi_sr_operations`). Each of the 8 sits in a function that also makes a true call. That is how
+`--uses` narrows: it keeps a call site when its enclosing function has an edge to the target
+(`verbs_navigate.h:557-583`, used at `:638`), and its comment says so. Not OCaml-specific. It
+matters here because xapi functions call several same-named `update_allowed_operations` in a row,
+so `p=` lines from `--uses` need reading before being trusted.
+
+Against grep on the same rows (`baseline-lookups.md`): row 6, bare grep returns 782 hits, and
+qualified grep finds the one caller with no noise. ripwire returns 3 callers, 1 of them right.
+Row 11, qualified grep finds 16 of 23 and misses every same-file call; bare grep finds all 25
+in 179 hits. ripwire returns 19 callers, all right.
 
 ## Parser robustness issue
 
