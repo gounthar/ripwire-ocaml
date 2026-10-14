@@ -90,6 +90,54 @@ matter. That needs either the file-module scope (`xapi_vdi.ml` -> `Xapi_vdi`) pl
 scopes, or the qualified-call resolver in `upstream-rules.md`. Whether `enclosingScopeOf` gives
 OCaml `struct` scopes was not checked.
 
+## Module scopes: qualified selectors now narrow
+
+Spike commit on top of `09f609bc`: 53 added lines in four files [ran it, `git diff --stat`].
+
+- `ocamlEnclosingScopeOf` (`ingest_names.h`): nearest `module_binding`, name read from its
+  positional `module_name` child, skipping the binding's own name. Same shape as
+  `kotlinEnclosingScopeOf`. Called from a new `Lang::OCaml` arm in the per-language scope
+  dispatch in `ingest_sidecap.h`.
+- `scopeOCamlFileModules` (`ingest_model.h`), called in `ingest.cpp` before `assignFields`: a
+  top-level def with no enclosing module takes the capitalized file basename. It runs after
+  capture because `captureTagsFacts` gets a `fileId`, not a path. dune `(wrapped true)`
+  prefixes (`Lib__Xapi_vdi`) are not modelled; functors are scoped like plain modules.
+- Rebuild, incremental, same host: 7m14.9s wall, 10m22.5s user, 18.1s sys [ran it].
+
+`--expand=SEL --top-k=0 --no-cache` [ran it]:
+
+| selector | before | after |
+|---|---|---|
+| `Generic::hard_shutdown` / `Generic.hard_shutdown` (row 4) | empty | `device.ml:356` only |
+| `PV_Vnc::start` / `PV_Vnc.start` (row 6) | empty | `service.ml:955` + `service.mli:90` |
+| `Xapi_vdi::update_allowed_operations` / `.` form (row 11) | empty | `xapi_vdi.ml:539` + `xapi_vdi.mli:47` |
+| `Vif::hard_shutdown` (control: other module, same name) | not run | `device.ml:965` only |
+| `Device::Generic` (file module on a module) | not run | `device.ml:111` + `device.mli:61` |
+| `Nosuch::hard_shutdown` (negative control) | not run | matched no symbol |
+
+All three rows land on the answer key, each with only the definition and its `.mli`
+declaration (`service.mli:90` sits in `module PV_Vnc : sig` at line 78). Row 4 goes from 21
+definitions to 1, row 6 from 83 to 2, row 11 from 27 to 2. The `.` spelling works without
+any selector change [ran it; where ripwire splits on `.` was not traced].
+
+**Cache trap.** Without `--no-cache` the same binary gave mixed answers (`PV_Vnc::start`
+matched nothing, `Xapi_vdi.update_allowed_operations` matched). `kParserVer` is still the
+placeholder 901, so the cache serves records from the scopeless build [inferred from the
+`--no-cache` runs being consistent]. A PR bumps it.
+
+**Callers: nothing to measure yet.** `--callers=Xapi_vdi::update_allowed_operations` finds both
+defs and returns `count="0"`, because the spike captures no references at all. So the caller
+rows (6, 11), where grep returns 782 and 179 hits, are still unmeasured. That needs call
+captures in `tags.scm` plus the qualifier on the reference side, the slice-6b question in
+`upstream-rules.md`.
+
+**Data vs C++.** The maintainer asked for shared mechanisms over per-language C++. Scope is
+per-language C++ today: Rust, Kotlin and Ruby each have a walker on `main` (`ingest_names.h`
+924, 1009, 1045), so a fourth is precedented but runs against the stated preference. The OCaml
+and Kotlin walkers are identical up to two strings (ancestor kind, name-child kind), so a shared
+table-driven walker is a mechanism a PR could offer. The file-module scope has no node to read
+and stays a special case.
+
 ## Parser robustness issue
 
 The spike hit a robustness issue in the vendored grammar that can stop an index run. Real xen-api
@@ -102,5 +150,7 @@ languages.
 - Parse rate and definitions are not the risk: 100% parse, 16/17, and a 1 s index.
 - PR cost beyond the spike: the pre-parse guard and its gate, fixtures and a red-first
   gate, the 30-argv byte-identity diff, ASan, docs and counts.
-- The value over grep (rows 4, 6, 11 and the caller rows 6, 11) needs module scoping that the
-  spike does not have. That is the next measurement.
+- Definitions with module scopes beat grep on rows 4, 6 and 11 (1-2 defs against 17, 107, 18).
+  Caller rows 6 and 11 are unmeasured: the spike has no references.
+- Acceptance risk: scope needs per-language C++ (a fourth walker), against the maintainer's
+  stated preference; offer a table-driven shared walker.
