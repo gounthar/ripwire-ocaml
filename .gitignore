@@ -1,6 +1,4 @@
 .env
-CLAUDE.md
-CONTEXT.md
 *.credentials.json
 corpus/
 out/
