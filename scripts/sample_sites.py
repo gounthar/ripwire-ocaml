@@ -1,5 +1,6 @@
 # Sample call sites `X.f` in .ml files where X is a module defined in the SAME file as a functor
 # application (module X = F (..)) or an alias (module X = Y.Z). Prints file:line X f kind rhs.
+# Skips matches inside a string or after `(*` on the same line; multi-line strings and comments still leak.
 import os, re, random, sys
 root = sys.argv[1]; n = int(sys.argv[2]); seed = int(sys.argv[3])
 modre = re.compile(r'^\s*module ([A-Z][A-Za-z0-9_]*) = ([A-Z][A-Za-z0-9_.]*)\s*(\(.*)?$')
@@ -21,6 +22,9 @@ for dp, _, fs in os.walk(os.path.join(root, 'ocaml')):
         for i, l in enumerate(lines):
             if l.lstrip().startswith(('(*', 'module ', 'open ')): continue
             for m in callre.finditer(l):
+                before = l[:m.start()]
+                if before.count('"') % 2 == 1 or '(*' in before:
+                    continue  # inside a string literal or a comment (single-line heuristic)
                 k, rhs, defl = mods[m.group(1)]
                 if i + 1 <= defl: continue
                 sites.append((os.path.relpath(p, root), i + 1, m.group(1), m.group(2), k, rhs))

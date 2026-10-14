@@ -1,0 +1,100 @@
+ocaml/xapi/xapi_host.ml	1546	Rrdd.backup_rrds	alias	Rrd_client.Client	7	unbound			1
+ocaml/idl/ocaml_backend/gen_api.ml	171	OU.alias_of_ty	alias	Ocaml_utils	1	right+multi	ocaml/idl/ocaml_backend/ocaml_utils.ml:73	ocaml/idl/ocaml_backend/ocaml_utils.ml:73	3
+ocaml/libs/rate-limit/test/test_linked_list.ml	70	LL.from_list	alias	Rate_limit_lib.Linked_list	2	right+multi	ocaml/libs/rate-limit/linked_list.ml:91	ocaml/libs/rate-limit/linked_list.ml:91	2
+ocaml/libs/rate-limit/test/test_caller_table.ml	62	Caller_table.delete	alias	Rate_limit_lib.Caller_table	12	right	ocaml/libs/rate-limit/caller_table.ml:142	ocaml/libs/rate-limit/caller_table.ml:142	1
+ocaml/tests/test_vif_helpers.ml	59	T.make_pvs_proxy	alias	Test_common	1	right	ocaml/tests/common/test_common.ml:499	ocaml/tests/common/test_common.ml:499	1
+ocaml/xapi/storage_task.ml	39	Updates.add	functor	Updates.Updates	97	right	ocaml/xapi-idl/lib/updates.ml:189	ocaml/xapi-idl/lib/updates.ml:189	1
+ocaml/xapi/extauth_plugin_ADwinbind.ml	1410	HostsConfIPv6.join	functor	HostsConfFunc	8	right+multi	ocaml/xapi/extauth_plugin_ADwinbind.ml:1385	ocaml/xapi/extauth_plugin_ADwinbind.ml:1385	2
+ocaml/libs/xapi-stdext/lib/xapi-stdext-threads/ipq_test.ml	24	Ipq.is_empty	alias	Xapi_stdext_threads_scheduler.Ipq	5	right	ocaml/libs/xapi-stdext/lib/xapi-stdext-threads/ipq.ml:31	ocaml/libs/xapi-stdext/lib/xapi-stdext-threads/ipq.ml:31	1
+ocaml/libs/stunnel/stunnel_cache.ml	102	Tbl.fold	functor	Table.Make	15	refused		ocaml/database/db_cache_types.ml:114 ocaml/libs/resources/table.ml:55	3
+ocaml/libs/rate-limit/test/test_lru.ml	135	LRU.filter	alias	Rate_limit_lib.Lru	20	refused		ocaml/libs/rate-limit/lru.ml:152	1
+ocaml/xapi-idl/lib/scheduler.ml	131	HandleMap.min_binding	functor	Map.Make	0	unbound		OUTSIDE	1
+ocaml/tests/test_pool_license.ml	73	Date.t	alias	Clock.Date	834	NO-SITE			
+ocaml/libs/rate-limit/test/test_token_bucket.ml	334	Token_bucket.delay_then_consume	alias	Rate_limit_lib.Token_bucket	2	right	ocaml/libs/rate-limit/token_bucket.ml:85	ocaml/libs/rate-limit/token_bucket.ml:85	1
+ocaml/libs/rate-limit/test/test_lru.ml	41	LRU.drop_while	alias	Rate_limit_lib.Lru	4	refused		ocaml/libs/rate-limit/lru.ml:145	1
+ocaml/sdk-gen/go/test_gen_go.ml	1482	StringMap.singleton	alias	Json.StringMap	1	CHECK-no-truth	ocaml/libs/http-lib/xMLRPC.ml:166		1
+ocaml/tests/test_pvs_proxy.ml	52	T.make_pvs_site	alias	Test_common	1	right	ocaml/tests/common/test_common.ml:492	ocaml/tests/common/test_common.ml:492	1
+ocaml/tests/test_clustering.ml	677	T.make_test_database	alias	Test_common	1	right	ocaml/tests/common/test_common.ml:123	ocaml/tests/common/test_common.ml:123	1
+ocaml/tests/test_clustering.ml	198	T.make_test_database	alias	Test_common	1	right	ocaml/tests/common/test_common.ml:123	ocaml/tests/common/test_common.ml:123	1
+ocaml/libs/ezxenstore/watch/ez_xenstore_watch.ml	179	IntMap.mem	functor	Map.Make	6	refused		OUTSIDE	5
+ocaml/tests/test_pgpu.ml	171	T.make_vgpu	alias	Test_common	3	refused		ocaml/tests/common/test_common.ml:467	1
+ocaml/tests/test_clustering.ml	455	T.make_pif	alias	Test_common	1	right	ocaml/tests/common/test_common.ml:234	ocaml/tests/common/test_common.ml:234	1
+ocaml/libs/xapi-rrd/lib/rrd.ml	1084	Fring.length	alias	Rrd_fring	7	right+multi	ocaml/libs/xapi-rrd/lib/rrd_fring.ml:47	ocaml/libs/xapi-rrd/lib/rrd_fring.ml:47	2
+ocaml/xcp-rrdd/bin/rrdp-squeezed/rrdp_squeezed.ml	242	D.error	functor	Debug.Make	55	refused		ocaml/libs/log/debug.ml:354	1
+ocaml/xapi/xapi_vm.ml	549	Rrdd.archive_rrd	alias	Rrd_client.Client	3	refused			1
+ocaml/xenopsd/lib/xenops_task.ml	43	Xenops_task.id_of_handle	functor	Task_server.Task	2	right	ocaml/xapi-idl/lib/task_server.ml:122	ocaml/xapi-idl/lib/task_server.ml:122	1
+ocaml/libs/xapi-stdext/lib/xapi-stdext-std/listext_test.ml	150	Listext.split_at	alias	Xapi_stdext_std.Listext.List	2	right	ocaml/libs/xapi-stdext/lib/xapi-stdext-std/listext.ml:145	ocaml/libs/xapi-stdext/lib/xapi-stdext-std/listext.ml:145	1
+ocaml/message-switch/unix/protocol_unix_scheduler.ml	47	Int64Map.add	functor	Map.Make	97	refused		OUTSIDE	2
+ocaml/xapi/remote_requests.ml	194	Unixext.string_of_fd	alias	Xapi_stdext_unix.Unixext	2	right	ocaml/libs/xapi-stdext/lib/xapi-stdext-unix/unixext.ml:164	ocaml/libs/xapi-stdext/lib/xapi-stdext-unix/unixext.ml:164	1
+ocaml/xapi/cert_distrib.ml	661	D.error	functor	Debug.Make	55	wrong?	ocaml/xapi/storage_smapiv1_wrapper.ml:318 ocaml/xapi/vm_sysprep.ml:27 ocaml/xapi/vm_sysprep.mli:16 ocaml/xapi/xapi_host_driver_tool.ml:62	ocaml/libs/log/debug.ml:354	1
+ocaml/xapi-storage-script/main.ml	1911	VDI.stat	functor	VDIImpl	57	wrong?+multi	ocaml/xapi-idl/storage/storage_interface.ml:826 ocaml/xapi-idl/storage/storage_skeleton.ml:111 ocaml/xapi/storage_mux.ml:499 ocaml/xapi/storage_smapiv1.ml:794 ocaml/xapi/storage_smapiv1_wrapper.ml:853	ocaml/xapi-storage-script/main.ml:1366	2
+ocaml/xapi/xapi_pool.ml	4224	Unixext.really_write_string	alias	Xapi_stdext_unix.Unixext	2	right	ocaml/libs/xapi-stdext/lib/xapi-stdext-unix/unixext.ml:530	ocaml/libs/xapi-stdext/lib/xapi-stdext-unix/unixext.ml:530	1
+ocaml/xcp-rrdd/bin/rrdd/rrdd_bindings.ml	120	Server.unset_cache_sr	functor	Rrd_interface.RPC_API	3	wrong?	ocaml/xcp-rrdd/bin/rrdd/rrdd_server.ml:582	ocaml/xapi-idl/rrd/rrd_interface.ml:424	1
+ocaml/xenopsd/lib/xenops_server_simulator.ml	198	DB.write	functor	TypedTable	27	CHECK-partial	ocaml/xenopsd/lib/io.ml:29 ocaml/xenopsd/lib/xenops_utils.ml:159 ocaml/xenopsd/lib/xenops_utils.ml:264 ocaml/xenopsd/lib/xenops_utils.ml:359	ocaml/xenopsd/lib/xenops_utils.ml:359	1
+ocaml/xapi-storage-script/main.ml	1826	Datapath_client.detach	functor	Xapi_storage.Data.Datapath	27	refused		ocaml/xapi-storage/generator/lib/data.ml:174	1
+ocaml/tests/test_bond.ml	193	T.create_vlan_pif	alias	Test_common	1	right	ocaml/tests/common/test_common.ml:564	ocaml/tests/common/test_common.ml:564	1
+ocaml/libs/ezxenstore/watch/ez_xenstore_watch.ml	168	IntMap.find	functor	Map.Make	38	refused		OUTSIDE	2
+ocaml/tests/test_bond.ml	98	T.make_network	alias	Test_common	2	refused		ocaml/tests/common/test_common.ml:264	1
+ocaml/idl/ocaml_backend/gen_client.ml	194	O.string_of_param	alias	Ocaml_syntax	2	NO-SITE			
+ocaml/xapi/sparse_dd_wrapper.ml	49	Unixext.string_of_file	alias	Xapi_stdext_unix.Unixext	9	right	ocaml/libs/xapi-stdext/lib/xapi-stdext-unix/unixext.ml:169	ocaml/libs/xapi-stdext/lib/xapi-stdext-unix/unixext.ml:169	1
+ocaml/xapi-idl/lib_test/task_server_test.ml	165	T.run	functor	Task_server.Task	22	refused		ocaml/xapi-idl/lib/task_server.ml:189	1
+ocaml/xapi/create_misc.ml	150	Unixext.readfile_line	alias	Xapi_stdext_unix.Unixext	2	right	ocaml/libs/xapi-stdext/lib/xapi-stdext-unix/unixext.ml:131	ocaml/libs/xapi-stdext/lib/xapi-stdext-unix/unixext.ml:131	1
+ocaml/database/redo_log.ml	477	R.debug	functor	Debug.Make	22	refused		ocaml/libs/log/debug.ml:348	2
+ocaml/database/redo_log.ml	895	D.debug	functor	Debug.Make	22	refused		ocaml/libs/log/debug.ml:348	1
+ocaml/xapi-storage-script/main.ml	561	R.success	alias	Rpc	6	refused			2
+ocaml/xapi-idl/lib_test/updates_test.ml	28	M.empty	functor	Updates.Updates	60	refused		ocaml/xapi-idl/lib/updates.ml:147	1
+ocaml/tests/test_vm_helpers.ml	623	VGPU_T.k100	alias	Test_vgpu_common	1	NO-SITE			
+ocaml/libs/rate-limit/test/test_caller_table.ml	80	Caller_table.get	alias	Rate_limit_lib.Caller_table	75	right+multi	ocaml/libs/rate-limit/caller_table.ml:157	ocaml/libs/rate-limit/caller_table.ml:157	2
+ocaml/libs/http-lib/http_svr.ml	624	Unixext.set_tcp_nodelay	alias	Xapi_stdext_unix.Unixext	2	refused		ocaml/libs/xapi-stdext/lib/xapi-stdext-unix/unixext.ml:810	1
+ocaml/message-switch/core/make.ml	55	Response.make_body_reader	functor	Cohttp.Response.Make	0	refused			1
+ocaml/tests/test_network_sriov.ml	434	T.make_host	alias	Test_common	5	refused		ocaml/tests/common/test_common.ml:169	1
+ocaml/database/db_cache_impl.ml	228	W.debug	functor	Debug.Make	22	refused		ocaml/libs/log/debug.ml:348	1
+ocaml/xapi/xapi_observer.ml	427	SMObserverConfig.destroy	functor	Dom0ObserverConfig	211	CHECK-partial+multi	ocaml/message-switch/core/make.ml:301 ocaml/message-switch/unix/protocol_unix.ml:447 ocaml/xapi/xapi_observer.ml:162 ocaml/xapi/xapi_observer.ml:362 ocaml/xapi/xapi_observer.ml:563 ocaml/xapi/xapi_observer.ml:72	ocaml/xapi/xapi_observer.ml:362	2
+ocaml/libs/rate-limit/test/test_lru.ml	158	LRU.to_list	alias	Rate_limit_lib.Lru	10	refused		ocaml/libs/rate-limit/lru.ml:137	1
+ocaml/libs/rate-limit/test/test_rate_limit.ml	114	Rate_limit.submit_async	alias	Rate_limit_lib.Rate_limit	4	right+multi	ocaml/libs/rate-limit/rate_limit.ml:131	ocaml/libs/rate-limit/rate_limit.ml:131	3
+ocaml/xapi/xapi_clustering.ml	616	Delay.make	alias	Xapi_stdext_threads.Threadext.Delay	134	CHECK-partial	ocaml/xapi-idl/lib/scheduler.ml:168	ocaml/libs/xapi-stdext/lib/xapi-stdext-threads/threadext.ml:60 ocaml/xapi-idl/lib/scheduler.ml:168	1
+ocaml/xapi/cert_distrib.ml	753	CertMap.find_opt	functor	Map.Make	2	wrong	ocaml/xapi/helpers.ml:2324 ocaml/xapi/vm_sysprep.ml:63	OUTSIDE	1
+ocaml/nbd/src/main.ml	84	Xen_api.make	alias	Xen_api_client_lwt.Xen_api_lwt_unix	134	refused		ocaml/xen-api-client/lwt/xen_api_lwt_unix.ml:150	1
+ocaml/xapi/cluster_stack_constraints.ml	73	Listext.intersect	alias	Xapi_stdext_std.Listext.List	4	NO-SITE			
+ocaml/tests/test_vif_helpers.ml	42	T.make_vm	alias	Test_common	3	refused		ocaml/tests/common/test_common.ml:130	1
+ocaml/tests/test_network_sriov.ml	96	T.create_physical_pif	alias	Test_common	1	right	ocaml/tests/common/test_common.ml:553	ocaml/tests/common/test_common.ml:553	1
+ocaml/tests/test_network_sriov.ml	248	T.create_physical_pif	alias	Test_common	1	right	ocaml/tests/common/test_common.ml:553	ocaml/tests/common/test_common.ml:553	1
+ocaml/libs/xapi-rrd/lib_test/crowbar_tests.ml	89	Cb.add_test	alias	Crowbar	0	refused			10
+ocaml/idl/ocaml_backend/gen_server.ml	155	O.string_of_param	alias	Ocaml_syntax	2	right+multi	ocaml/idl/ocaml_backend/ocaml_syntax.ml:35	ocaml/idl/ocaml_backend/ocaml_syntax.ml:35	3
+ocaml/xenopsd/lib/xenops_server_simulator.ml	778	DB.write	functor	TypedTable	27	CHECK-partial+multi	ocaml/xenopsd/lib/io.ml:29 ocaml/xenopsd/lib/xenops_utils.ml:159 ocaml/xenopsd/lib/xenops_utils.ml:264 ocaml/xenopsd/lib/xenops_utils.ml:359	ocaml/xenopsd/lib/xenops_utils.ml:359	2
+ocaml/tests/test_network_sriov.ml	168	T.make_test_database	alias	Test_common	1	right	ocaml/tests/common/test_common.ml:123	ocaml/tests/common/test_common.ml:123	1
+ocaml/database/block_device_io.ml	840	R.error	functor	Debug.Make	55	refused		ocaml/libs/log/debug.ml:354	645
+ocaml/database/block_device_io.ml	506	R.debug	functor	Debug.Make	22	refused		ocaml/libs/log/debug.ml:348	12
+ocaml/quicktest/quicktest_cbt.ml	98	VDI.enable_cbt	alias	Client.Client.VDI	11	right	ocaml/idl/datamodel.ml:6090 ocaml/tests/test_vdi_cbt.ml:52 ocaml/xapi-idl/storage/storage_interface.ml:1016 ocaml/xapi-idl/storage/storage_skeleton.ml:173 ocaml/xapi/message_forwarding.ml:5788 ocaml/xapi/storage_mux.ml:771 ocaml/xapi/storage_smapiv1.ml:1119 ocaml/xapi/storage_smapiv1_wrapper.ml:938	ocaml/idl/datamodel.ml:6090 ocaml/tests/test_vdi_cbt.ml:52 ocaml/xapi-idl/storage/storage_interface.ml:1016 ocaml/xapi-idl/storage/storage_skeleton.ml:173 ocaml/xapi/message_forwarding.ml:5788 ocaml/xapi/storage_mux.ml:771 ocaml/xapi/storage_smapiv1.ml:1119 ocaml/xapi/storage_smapiv1_wrapper.ml:938	1
+ocaml/xapi-idl/lib/observer_helpers.ml	234	S.set_endpoints	functor	ObserverAPI	16	right+multi	ocaml/xapi-idl/lib/observer_helpers.ml:127	ocaml/xapi-idl/lib/observer_helpers.ml:127	2
+ocaml/xapi/xapi_observer.ml	740	ComponentSet.diff	functor	Set.Make	8	refused		OUTSIDE	2
+ocaml/xapi-idl/lib_test/task_server_test.ml	189	T.cancel	functor	Task_server.Task	28	refused		ocaml/idl/datamodel.ml:433 ocaml/xapi-idl/lib/task_server.ml:258 ocaml/xapi-storage/generator/lib/task.ml:48 ocaml/xapi/message_forwarding.ml:727	1
+ocaml/libs/xapi-rrd/lib/rrd.ml	1013	Utils.f_to_s	alias	Rrd_utils	1	right+multi	ocaml/libs/xapi-rrd/lib/rrd_utils.ml:69	ocaml/libs/xapi-rrd/lib/rrd_utils.ml:69	8
+ocaml/libs/rate-limit/test/test_lru.ml	111	LRU.cap	alias	Rate_limit_lib.Lru	2	right+multi	ocaml/libs/rate-limit/lru.ml:135	ocaml/libs/rate-limit/lru.ml:135	2
+ocaml/libs/rate-limit/lru.ml	88	LL.node	alias	Linked_list	9	right	ocaml/libs/rate-limit/linked_list.ml:15 ocaml/libs/rate-limit/linked_list.ml:25	ocaml/libs/rate-limit/linked_list.ml:15 ocaml/libs/rate-limit/linked_list.ml:25	1
+ocaml/xapi/export.ml	902	Unixext.really_write_string	alias	Xapi_stdext_unix.Unixext	2	right+multi	ocaml/libs/xapi-stdext/lib/xapi-stdext-unix/unixext.ml:530	ocaml/libs/xapi-stdext/lib/xapi-stdext-unix/unixext.ml:530	2
+ocaml/xapi-idl/rrd/rrd_cli.ml	14	Cmds.implementation	functor	Rrd_interface.RPC_API	25	CHECK-partial	ocaml/xapi-idl/rrd/rrd_interface.ml:153	ocaml/xapi-idl/gpumon/gpumon_interface.ml:124 ocaml/xapi-idl/guard/privileged/interface.ml:55 ocaml/xapi-idl/guard/varstored/interface.ml:37 ocaml/xapi-idl/rrd/rrd_interface.ml:153 ocaml/xapi-idl/v6/v6_interface.ml:149	1
+ocaml/libs/rate-limit/test/test_caller_statistics.ml	52	Caller_statistics.register_call	alias	Rate_limit_lib.Caller_statistics	2	right	ocaml/libs/rate-limit/caller_statistics.ml:23	ocaml/libs/rate-limit/caller_statistics.ml:23	1
+ocaml/xen-api-client/lwt_examples/upload_disk.ml	55	Data_channel.of_fd	alias	Xen_api_client_lwt.Data_channel	7	right	ocaml/xen-api-client/lwt/data_channel.ml:74	ocaml/xen-api-client/lwt/data_channel.ml:74	1
+ocaml/tests/test_pgpu.ml	21	T.make_test_database	alias	Test_common	1	right	ocaml/tests/common/test_common.ml:123	ocaml/tests/common/test_common.ml:123	1
+ocaml/libs/xapi-stdext/lib/xapi-stdext-threads/ipq_test.ml	19	Ipq.create	alias	Xapi_stdext_threads_scheduler.Ipq	261	right	ocaml/libs/xapi-stdext/lib/xapi-stdext-threads/ipq.ml:24	ocaml/libs/xapi-stdext/lib/xapi-stdext-threads/ipq.ml:24	1
+ocaml/libs/ezxenstore/watch/ez_xenstore_watch.ml	188	IntMap.mem	functor	Map.Make	6	refused		OUTSIDE	5
+ocaml/xapi-idl/lib_test/task_server_test.ml	184	T.add	functor	Task_server.Task	97	refused		ocaml/xapi-idl/lib/task_server.ml:125	1
+ocaml/libs/rate-limit/test/test_caller_table.ml	384	Caller_table.get	alias	Rate_limit_lib.Caller_table	75	right+multi	ocaml/libs/rate-limit/caller_table.ml:157	ocaml/libs/rate-limit/caller_table.ml:157	2
+ocaml/xapi/storage_access.ml	279	StringSet.inter	functor	Set.Make	0	refused		OUTSIDE	2
+ocaml/sdk-gen/powershell/gen_powershell_binding.ml	562	DU.fields_of_obj	alias	Datamodel_utils	1	right+multi	ocaml/idl/datamodel_utils.ml:158	ocaml/idl/datamodel_utils.ml:158	2
+ocaml/xapi-idl/lib/scheduler.ml	107	HandleMap.split	functor	Map.Make	7	refused		OUTSIDE	1
+ocaml/libs/rate-limit/test/test_token_bucket.ml	104	Token_bucket.create_with_timestamp	alias	Rate_limit_lib.Token_bucket	2	right	ocaml/libs/rate-limit/token_bucket.ml:19	ocaml/libs/rate-limit/token_bucket.ml:19	1
+ocaml/quicktest/trace/trace.ml	96	MyScope.is_recording	alias	Scope	2	right+multi	ocaml/quicktest/trace/scope.ml:63	ocaml/quicktest/trace/scope.ml:63	2
+ocaml/libs/rate-limit/test/test_caller_table.ml	74	Caller_table.insert	alias	Rate_limit_lib.Caller_table	15	right+multi	ocaml/libs/rate-limit/caller_table.ml:125	ocaml/libs/rate-limit/caller_table.ml:125	2
+ocaml/libs/rate-limit/test/test_caller_table.ml	242	Caller_table.mem	alias	Rate_limit_lib.Caller_table	6	right+multi	ocaml/libs/rate-limit/caller_table.ml:121	ocaml/libs/rate-limit/caller_table.ml:121	4
+ocaml/xenopsd/lib/migrate_connect.ml	50	D.warn	functor	Debug.Make	9	refused		ocaml/libs/log/debug.ml:350	1
+ocaml/libs/xapi-rrd/lib_test/crowbar_tests.ml	35	Fring.get	alias	Rrd.Fring	75	refused			1
+ocaml/xapi/extauth_plugin_ADwinbind.ml	1552	D.error	functor	Debug.Make	55	wrong?	ocaml/xapi/storage_smapiv1_wrapper.ml:318 ocaml/xapi/vm_sysprep.ml:27 ocaml/xapi/vm_sysprep.mli:16 ocaml/xapi/xapi_host_driver_tool.ml:62	ocaml/libs/log/debug.ml:354	1
+ocaml/tests/test_clustering.ml	101	T.make_sm	alias	Test_common	1	right+multi	ocaml/tests/common/test_common.ml:361	ocaml/tests/common/test_common.ml:361	6
+ocaml/xapi/xapi_host_helpers.ml	621	D.debug	functor	Debug.Make	22	wrong?	ocaml/xapi/sm.ml:67	ocaml/libs/log/debug.ml:348	1
+ocaml/xapi-storage-script/main.ml	1986	VDI.vdi_clone_impl	functor	VDIImpl	1	NO-SITE			
+ocaml/xenopsd/xc/domain.ml	1087	D.debug	functor	Debug.Make	22	refused		ocaml/libs/log/debug.ml:348	6
+ocaml/tests/test_network_sriov.ml	105	T.make_test_database	alias	Test_common	1	right	ocaml/tests/common/test_common.ml:123	ocaml/tests/common/test_common.ml:123	1
+ocaml/libs/rate-limit/test/test_caller_table.ml	360	Caller_table.get	alias	Rate_limit_lib.Caller_table	75	right+multi	ocaml/libs/rate-limit/caller_table.ml:157	ocaml/libs/rate-limit/caller_table.ml:157	3
+ocaml/tests/test_vm_memory_constraints.ml	101	C.are_pinned	alias	Vm_memory_constraints.Vm_memory_constraints	1	NO-SITE			

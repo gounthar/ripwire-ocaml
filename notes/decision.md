@@ -5,20 +5,23 @@ Detail lives in `baseline-lookups.md`, `spike-definitions.md` and `upstream-rule
 
 ## Recommendation
 
-**Go for definitions. Call edges: a provisional go, on a small sample.** Definitions are
-measured on 17 rows and worth it outright. Call edges rest on two hand-checked lookups plus a
-20-site sample of the risky path:
+**Go for definitions. Call edges: go, if aliases are followed and the rest is refused.**
+Definitions are measured on 17 rows and worth it outright. Call edges rest on two hand-checked
+lookups plus a 98-site sample of the risky path:
 
 - Row 11, qualifier naming a file module: 19 of 19 callers right (grep: 179 hits).
 - Row 6, qualifier naming a functor-built module: 2 of 3 callers wrong.
-- 20 random calls through functor-built or aliased modules (of 3,478): 12 right, 7 refused,
-  1 wrong. Both wrong cases so far are functor-built modules, binding as a split across unrelated
-  same-named definitions. The wrong rate is somewhere between 1% and 24% (95% interval), which
-  bounds the problem but does not size it.
+- 98 random calls through functor-built or aliased modules (of 3,461): 46 right, 8 wrong,
+  3 split, 23 refused with the target in the corpus, 14 refused correctly, 4 not captured.
+  Wrong or split: 6.4% to 19.0% (95%), about 220 to 660 edges. Aliases: 2 of 60 wrong.
+  Functor-built: 9 of 38 wrong or split.
 
-The condition for call edges stays: a qualified OCaml call whose qualifier keys nothing should
-be refused, not laddered. That is slice 6a, the maintainers' shared refusal, so it is the question
-to put on #377. A bigger sample, or a corpus-wide count, should come before claiming a rate.
+The condition for call edges, narrowed by the sample: **follow aliases** (`module T =
+Test_common`) to the module they name, then **refuse** a qualified call whose qualifier still
+keys nothing. A blanket refusal would also drop the 41 alias calls that are right today. The
+refusal is slice 6a, the maintainers' shared mechanism, so it is the question for #377; the
+alias rewrite is OCaml-side qualifier extraction. Its effect is worked out from the sample, not
+measured on a build.
 
 Nothing has been posted upstream. Whether and when to comment on #377 is Bruno's call.
 
@@ -51,8 +54,8 @@ Detail in `spike-definitions.md`, Callers: rows 6 and 11.
   keyed under it, the ref falls to the bare-name ladder, and on row 6 the ladder bound
   `Varstore_guard.start` and `Swtpm_guard.start` to `PV_Vnc.start`. 765 functor applications and
   520 aliases in `ocaml/*.ml` take the same path [ran it, line-shape grep, lower bound]. How many
-  of their calls bind wrongly rather than being declined: sampled, 1 of 20 wrong (see
-  `spike-definitions.md`, Sample).
+  of their calls bind wrongly rather than being declined: sampled, 8 of 98 wrong and 3 split
+  (see `spike-definitions.md`, Sample (100 sites)).
 - Not captured at all: `|>` pipelines, functions passed as values, `M.( )` local opens. These
   are misses in the query, not wrong bindings; neither row hit one.
 - `--uses` lists every same-named call in a function that has a true edge, so its `p=` lines
@@ -106,7 +109,8 @@ each gate iteration costs that. No day estimate: nothing here measured one.
 
 1. Done: rows 6 and 11 measured. Neither clean nor noise: right where the qualifier keys a
    scope, wrong where it names a functor application.
-2. Ask on #377 whether the shared refusal (slice 6a) can land with OCaml call-edge support.
+2. Ask on #377 whether the shared refusal (slice 6a) can land with OCaml call-edge support,
+   with aliases resolved on the OCaml side first.
    An OCaml-only guard is not an option: upstream refuses per-language guards
    (`upstream-rules.md`). If 6a cannot come first, call edges wait for it, and a
    definitions-only PR goes alone.

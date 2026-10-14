@@ -198,7 +198,12 @@ qualified grep finds the one caller with no noise. ripwire returns 3 callers, 1 
 Row 11, qualified grep finds 16 of 23 and misses every same-file call; bare grep finds all 25
 in 179 hits. ripwire returns 19 callers, all right.
 
-## Sample: calls through functor-built and aliased modules
+## Pilot sample (20 sites): calls through functor-built and aliased modules
+
+Superseded by the 100-site sample below; kept for the record. Correction: row
+`xapi_caller.ml:157` matched a log string, not a call (the sampler did not skip string literals
+then). The call it was scored as is on line 155. So the pilot has 19 valid sites: 11 right,
+7 refused, 1 wrong.
 
 Row 6 is one lookup, so the risky path got its own sample [ran it]. `scripts/sample_sites.py`
 lists every `X.f arg` in `ocaml/**/*.ml` where `X` is defined in the same file as a functor
@@ -244,6 +249,55 @@ under the alias name either; how the ladder gets there was not traced.
 
 Harness note: `--uses` output is paged, so one site (`Caller_table.insert`) was not in the first
 page and was resolved through `--callees` on its enclosing function instead.
+
+## Sample (100 sites): calls through functor-built and aliased modules
+
+Same population as the pilot, with the sampler now skipping matches inside a string or after
+`(*` on the line: **3,461 sites** (1,560 functor, 1,901 alias), seed 2026 [ran it].
+`scripts/score_sites.py` scores each site automatically (enclosing function from `--uses`,
+binding from `--callees`, candidate target from `--expand=Z::f` on the module the alias or
+functor names) and flags what it cannot settle; every flagged row was then read in the source.
+Raw output: `sample100-raw.tsv` (the `out` column is the automatic label, before hand checks).
+Run: 7m23.8s wall, 80m46s user (ripwire is multithreaded), WSL2 x86_64 native.
+
+2 rows are sampler noise (`Date.t` is a type, `VGPU_T.k100` a value), leaving **98**:
+
+| outcome | sites | 95% interval |
+|---|---|---|
+| right | 46 | 37.4% to 56.7% |
+| split, includes the right target | 3 | 1.0% to 8.6% |
+| **wrong** | 8 | 4.2% to 15.3% |
+| refused, target outside the corpus or not keyable | 14 | |
+| refused, **target in the corpus** | 23 | 16.2% to 32.8% |
+| missed: function passed as a value, not called | 4 | |
+
+Wrong or split together: 11 of 98, 6.4% to 19.0%, so about 220 to 660 of the 3,461 sites.
+
+The 8 wrong: `CertMap.find_opt` (stdlib `Map.Make`), `Json.StringMap.singleton` (an alias whose
+target is itself `Map.Make`), three `D.error` / `D.debug` through `Debug.Make`, `VDI.stat`
+(functor defined in the same file, bound to 5 other `stat`s), `Server.unset_cache_sr`
+(`Rrd_interface.RPC_API`, bound to the implementation passed as its argument), and
+`Delay.make` (alias to `Threadext.Delay`, bound to `scheduler.ml`'s own `Delay`). Each binds to
+same-named definitions nearby, never the real one.
+
+By kind:
+
+- **Aliases**: 60 valid sites, 2 wrong (0.9% to 11.4%). 41 right, of which 27 use a name with
+  one definition (counting `.ml` + `.mli` as one), so the bare-name ladder gets them by
+  uniqueness; how it got the other 14 was not traced. 10 refused although the alias names an
+  in-corpus module that defines the function (`T = Test_common`, `LRU = Rate_limit_lib.Lru`, ...).
+- **Functor-built**: 38 valid sites, 6 wrong and 3 split (13.0% to 39.2% together). 13 refused
+  with the target in the corpus, 8 of them `Debug.Make` logging calls (`D.debug`); the same
+  shape bound wrong 3 times.
+
+What this says about the refusal condition: refusing every qualified call whose qualifier keys
+nothing would also refuse the 41 alias calls that are right today. Following aliases to the
+module they name (`module T = Test_common` makes `T.f` key `Test_common::f`) is a pure
+qualifier rewrite: on this sample it keeps the 41, fixes the 10 in-corpus refusals and `Delay.make`,
+and sends `Json.StringMap.singleton` on to `Map.Make`, where it should be refused. Then refuse
+what still keys nothing. Functor applications are the residue: refusing them costs 4 right
+answers and removes 6 wrong and 3 split. These consequences are worked out from the table, not
+measured on a build that implements them.
 
 ## Parser robustness issue
 
