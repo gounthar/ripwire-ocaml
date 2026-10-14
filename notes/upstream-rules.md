@@ -33,9 +33,15 @@ not have yet:
 - A wrong edge the PR does not fix must be pinned as a known-gap arm, and a per-language guard
   for one language alone is explicitly refused.
 
-Consequence [inferred]: an OCaml PR can deliver definitions on its own, but OCaml call edges
-either wait for 6a/6b or ship with `Xapi_vdi.update_allowed_operations` laddered to every
-`update_allowed_operations` in the tree (the 179-hit row), pinned as a known gap. That is grep's
+Consequence [inferred]: an OCaml PR can deliver definitions on its own. Call edges are less
+clear-cut than "everything ladders". The bare-name ladder applies only when the canonical tier
+finds no `qualifier::name` definition. If OCaml top-level definitions get scoped to their file's
+module (`xapi_vdi.ml` -> `Xapi_vdi`), the 16 qualified calls on row 11 could bind correctly
+through the existing canonical tier. What would ladder is the rest: the 7 same-file calls with no
+qualifier, calls through `open` (row 9), and qualifiers naming a nested or external module.
+Whether ripwire gives a file a module scope at all is untested; the spike has to measure it.
+In the worst case, `update_allowed_operations` binds to every same-named definition in the tree
+(the 179-hit row), pinned as a known gap. That is grep's
 noise again, inside a tool that presents it as a call graph. Doing 6b ourselves is the
 alternative, and it is the maintainers' design to agree first.
 
