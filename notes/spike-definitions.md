@@ -125,11 +125,9 @@ matched nothing, `Xapi_vdi.update_allowed_operations` matched). `kParserVer` is 
 placeholder 901, so the cache serves records from the scopeless build [inferred from the
 `--no-cache` runs being consistent]. A PR bumps it.
 
-**Callers: nothing to measure yet.** `--callers=Xapi_vdi::update_allowed_operations` finds both
-defs and returns `count="0"`, because the spike captures no references at all. So the caller
-rows (6, 11), where grep returns 782 and 179 hits, are still unmeasured. That needs call
-captures in `tags.scm` plus the qualifier on the reference side, the slice-6b question in
-`upstream-rules.md`.
+**Callers: nothing to measure yet** at this commit. `--callers=Xapi_vdi::update_allowed_operations`
+found both defs and returned `count="0"`, because the spike captured no references. Measured in
+the next section.
 
 **Data vs C++.** The maintainer asked for shared mechanisms over per-language C++. Scope is
 per-language C++ today: Rust, Kotlin and Ruby each have a walker on `main` (`ingest_names.h`
@@ -137,6 +135,169 @@ per-language C++ today: Rust, Kotlin and Ruby each have a walker on `main` (`ing
 and Kotlin walkers are identical up to two strings (ancestor kind, name-child kind), so a shared
 table-driven walker is a mechanism a PR could offer. The file-module scope has no node to read
 and stays a special case.
+
+## Callers: rows 6 and 11
+
+Spike commit `8df054f6` on top of `56e64633`: 36 added lines in three files [ran it, `git diff --stat`].
+
+- `queries/ocaml/tags.scm`: `(application_expression function: (value_path (value_name) @name))
+  @reference.call`. Bare `f x` and qualified `M.f x`. Not captured: `x |> M.f`, `M.f` passed
+  as a value, `M.(f x)` local opens, method calls `o#m`.
+- `ocamlQualifierOf` (`ingest_names.h`) and an OCaml arm next to Rust's in `ingest_sidecap.h`:
+  the immediate module of the `value_path` becomes the reference's qualifier
+  (`Service.PV_Vnc.start` gives `PV_Vnc`). No `open`, alias or functor rewriting. The resolver
+  is untouched: a qualified ref goes through the existing `qualifier::name` canonical tier,
+  and falls to the bare-name ladder when that keys nothing.
+- Rebuild, incremental, WSL2 x86_64 native, gcc 14.2, `-j6`, bash `time`: 8m6.3s wall,
+  10m59.6s user, 20.1s sys [ran it].
+
+Scored [ran it] with `--callers=SEL --no-cache` and `--uses=SEL --no-cache` against the answer
+key in `baseline-lookups.md`. Each query takes 2.2 to 2.8 s wall, indexing included. The
+resolver's edges are function to function, so a caller is scored as a function, then checked
+against the key's sites. Four buckets: **correct**, **wrongly bound** (an edge to the target that
+the source does not make), **refused** (a call captured but left unbound, `declined_calls=`),
+**missed** (a key site the query never captured, which is the query's fault, not the resolver's).
+
+| row | target | callers returned | correct | wrongly bound | refused | missed |
+|---|---|---|---|---|---|---|
+| 6 | `PV_Vnc::start` | 3 | 1 (`xenops_server_xen.ml:2713`) | **2** | 2 calls (`declined_calls=2`, not identified) | 0 |
+| 11 | `Xapi_vdi::update_allowed_operations` | 19 (15 + 4 test) | 19, covering all 16 + 7 test key sites | 0 | 0 reported | 0 |
+
+**Row 11 is clean.** The 9 qualified calls bind to the right definition [ran it], through the
+canonical tier [inferred: `Xapi_vdi::update_allowed_operations` is keyed, and the decoys below bind
+to their own keys]. The 7 unqualified calls inside `xapi_vdi.ml` also bind correctly; how the ladder
+picked the right one of 27 same-named definitions was not traced. The decoy at `xapi_vdi.ml:1108`, `Xapi_sr_operations.update_allowed_operations`,
+binds to its own target: `clone` is listed as a caller of `Xapi_sr_operations::update_allowed_operations`
+[ran it].
+
+**Row 6's two wrong edges** are `Varstored.start` (`service.ml:685`) and `Swtpm.start` (`:778`).
+They call `Xenops_sandbox.Varstore_guard.start` and `Swtpm_guard.start`. Both modules are functor
+applications (`xenops_sandbox.ml:237-238`, `module Varstore_guard = Guard (Varstored)`), so no
+definition is keyed `Varstore_guard::start`; the real one is `Guard`'s, at `xenops_sandbox.ml:158`.
+The canonical tier keys nothing, the ref falls to the bare-name ladder, and the ladder picks
+`PV_Vnc.start`. This is the gap `upstream-rules.md` predicted (slice 6a) and the first measured
+instance of it.
+
+How often that path is taken: `xen-api` `ocaml/*.ml` holds 765 functor-application modules
+(`module X = F (Y)`) and 520 plain aliases (`module X = Y.Z`) [ran it, `git grep -E` on the line
+shape, so a lower bound: multi-line forms are not counted]. A call qualified by any of them
+ladders the same way. How many such calls bind wrongly, as opposed to being declined, was not
+measured.
+
+**`--uses` prints sites from the same function, not the same binding.** `--uses=Xapi_vdi::update_allowed_operations`
+returns 31 sites: the 23 in the key plus 8 calls to other modules' `update_allowed_operations`
+(`Xapi_vbd_helpers`, `Xapi_vif_helpers`, `Xapi_vusb_helpers`, `Xapi_vm_lifecycle`,
+`Xapi_sr_operations`). Each of the 8 sits in a function that also makes a true call. That is how
+`--uses` narrows: it keeps a call site when its enclosing function has an edge to the target
+(`verbs_navigate.h:557-583`, used at `:638`), and its comment says so. Not OCaml-specific. It
+matters here because xapi functions call several same-named `update_allowed_operations` in a row,
+so `p=` lines from `--uses` need reading before being trusted.
+
+Against grep on the same rows (`baseline-lookups.md`): row 6, bare grep returns 782 hits, and
+qualified grep finds the one caller with no noise. ripwire returns 3 callers, 1 of them right.
+Row 11, qualified grep finds 16 of 23 and misses every same-file call; bare grep finds all 25
+in 179 hits. ripwire returns 19 callers, all right.
+
+## Pilot sample (20 sites): calls through functor-built and aliased modules
+
+Superseded by the 100-site sample below; kept for the record. Correction: row
+`xapi_caller.ml:157` matched a log string, not a call (the sampler did not skip string literals
+then). The call it was scored as is on line 155. So the pilot has 19 valid sites: 11 right,
+7 refused, 1 wrong.
+
+Row 6 is one lookup, so the risky path got its own sample [ran it]. `scripts/sample_sites.py`
+lists every `X.f arg` in `ocaml/**/*.ml` where `X` is defined in the same file as a functor
+application (`module X = F (..)`) or an alias (`module X = Y.Z`): **3,478 sites** (1,560 functor,
+1,918 alias). Same-file definitions only, so a lower bound. 20 drawn with seed 377. For each: the
+enclosing function from `--uses`, what the call binds to from `--callees`, and the real target
+from `--expand=Z::f` on the module the alias or functor names, read by hand for the functor rows.
+
+| site | qualifier | outcome |
+|---|---|---|
+| `lru.ml:97` `LL.first` | alias `Linked_list` | right |
+| `xapi_pool.ml:2493` `Unixext.unlink_safe` | alias | right |
+| `test_network_sriov.ml:201` `T.create_physical_pif` | alias `Test_common` | right |
+| `xapi_caller.ml:157` `Caller_table.insert` | alias | right |
+| `test_pool_license.ml:91` `Date.to_rfc3339` | alias `Clock.Date` | right |
+| `test_xapi_xenops.ml:79` `Date.of_unix_time` | alias `Clock.Date` | right |
+| `xenops_server_simulator.ml:406` `DB.read_exn` | functor `TypedTable` (in corpus) | right |
+| `xapi_caller.ml:250` `Caller_statistics.get_token_count` | alias | right |
+| `gen_empty_custom.ml:132` `OU.ocaml_of_obj_name` | alias `Ocaml_utils` | right |
+| `test_timer.ml:64` `Timer.has_expired` | alias `Clock.Timer` | right |
+| `gen_rbac.ml:237` `DU.wire_name` | alias `Datamodel_utils` | right |
+| `test_rate_limit.ml:23` `Rate_limit.create` | alias | right |
+| `protocol_unix_scheduler.ml:39` `Int64Map.mem` | functor, stdlib `Map.Make` | refused (target outside corpus) |
+| `gen_c_binding.ml:93` `TypeSet.iter` | functor, stdlib `Set.Make` | refused (outside) |
+| `quicktest_event.ml:436` `StringSet.add` | functor, stdlib `Set.Make` | refused (outside) |
+| `gen_c_binding.ml:835` `StringSet.add` | functor, stdlib `Set.Make` | refused (outside) |
+| `http_svr.ml:327` `MethodMap.add` | functor, stdlib `Map.Make` | refused (outside) |
+| `xapi_vm.ml:735` `Rrdd.remove_rrd` | alias `Rrd_client.Client` | refused (no keyed definition found) |
+| `storage_smapiv1_migrate.ml:279` `State.remove_copy` | alias `Storage_migrate_helper.State` | refused, **though the target is in the corpus** (`storage_migrate_helper.ml:284`) |
+| `cert_distrib.ml:748` `CertMap.add` | functor, stdlib `Map.Make` | **wrong**: split across 8 unrelated `add`s in `ocaml/xapi/` |
+
+12 right, 7 refused, 1 wrong. Wilson 95% intervals on 20: wrong 0.9% to 23.6%, right 38.7% to
+78.1%. Over 3,478 sites that is roughly 30 to 820 wrong edges, so the sample bounds the problem
+without sizing it. Split by kind: 0 of 12 alias sites wrong (interval 0% to 24.3%), 1 of 8
+functor sites wrong (2.2% to 47.1%).
+
+Read with row 6: both wrong cases are functor-built modules, and both bind as a **split** across
+several same-named definitions, none of them the real one (row 6's `Varstore_guard.start` splits
+across four `start`s in `service.ml`). Stdlib `Map.Make` / `Set.Make` calls were refused four
+times out of five; the fifth split across eight `add`s in its own directory (why that one ladders
+and the others refuse was not traced). The alias sites bind right although nothing is keyed
+under the alias name either; how the ladder gets there was not traced.
+
+Harness note: `--uses` output is paged, so one site (`Caller_table.insert`) was not in the first
+page and was resolved through `--callees` on its enclosing function instead.
+
+## Sample (100 sites): calls through functor-built and aliased modules
+
+Same population as the pilot, with the sampler now skipping matches inside a string or after
+`(*` on the line: **3,461 sites** (1,560 functor, 1,901 alias), seed 2026 [ran it].
+`scripts/score_sites.py` scores each site automatically (enclosing function from `--uses`,
+binding from `--callees`, candidate target from `--expand=Z::f` on the module the alias or
+functor names) and flags what it cannot settle; every flagged row was then read in the source.
+Raw output: `sample100-raw.tsv` (the `out` column is the automatic label, before hand checks).
+Run: 7m23.8s wall, 80m46s user (ripwire is multithreaded), WSL2 x86_64 native.
+
+2 rows are sampler noise (`Date.t` is a type, `VGPU_T.k100` a value), leaving **98**:
+
+| outcome | sites | 95% interval |
+|---|---|---|
+| right | 46 | 37.4% to 56.7% |
+| split, includes the right target | 3 | 1.0% to 8.6% |
+| **wrong** | 8 | 4.2% to 15.3% |
+| refused, target outside the corpus or not keyable | 14 | |
+| refused, **target in the corpus** | 23 | 16.2% to 32.8% |
+| missed: function passed as a value, not called | 4 | |
+
+Wrong or split together: 11 of 98, 6.4% to 19.0%, so about 220 to 660 of the 3,461 sites.
+
+The 8 wrong: `CertMap.find_opt` (stdlib `Map.Make`), `Json.StringMap.singleton` (an alias whose
+target is itself `Map.Make`), three `D.error` / `D.debug` through `Debug.Make`, `VDI.stat`
+(functor defined in the same file, bound to 5 other `stat`s), `Server.unset_cache_sr`
+(`Rrd_interface.RPC_API`, bound to the implementation passed as its argument), and
+`Delay.make` (alias to `Threadext.Delay`, bound to `scheduler.ml`'s own `Delay`). Each binds to
+same-named definitions nearby, never the real one.
+
+By kind:
+
+- **Aliases**: 60 valid sites, 2 wrong (0.9% to 11.4%). 41 right, of which 27 use a name with
+  one definition (counting `.ml` + `.mli` as one), so the bare-name ladder gets them by
+  uniqueness; how it got the other 14 was not traced. 10 refused although the alias names an
+  in-corpus module that defines the function (`T = Test_common`, `LRU = Rate_limit_lib.Lru`, ...).
+- **Functor-built**: 38 valid sites, 6 wrong and 3 split (13.0% to 39.2% together). 13 refused
+  with the target in the corpus, 8 of them `Debug.Make` logging calls (`D.debug`); the same
+  shape bound wrong 3 times.
+
+What this says about the refusal condition: refusing every qualified call whose qualifier keys
+nothing would also refuse the 41 alias calls that are right today. Following aliases to the
+module they name (`module T = Test_common` makes `T.f` key `Test_common::f`) is a pure
+qualifier rewrite: on this sample it keeps the 41, fixes the 10 in-corpus refusals and `Delay.make`,
+and sends `Json.StringMap.singleton` on to `Map.Make`, where it should be refused. Then refuse
+what still keys nothing. Functor applications are the residue: refusing them costs 4 right
+answers and removes 6 wrong and 3 split. These consequences are worked out from the table, not
+measured on a build that implements them.
 
 ## Parser robustness issue
 
