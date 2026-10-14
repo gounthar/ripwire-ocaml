@@ -198,6 +198,53 @@ qualified grep finds the one caller with no noise. ripwire returns 3 callers, 1 
 Row 11, qualified grep finds 16 of 23 and misses every same-file call; bare grep finds all 25
 in 179 hits. ripwire returns 19 callers, all right.
 
+## Sample: calls through functor-built and aliased modules
+
+Row 6 is one lookup, so the risky path got its own sample [ran it]. `scripts/sample_sites.py`
+lists every `X.f arg` in `ocaml/**/*.ml` where `X` is defined in the same file as a functor
+application (`module X = F (..)`) or an alias (`module X = Y.Z`): **3,478 sites** (1,560 functor,
+1,918 alias). Same-file definitions only, so a lower bound. 20 drawn with seed 377. For each: the
+enclosing function from `--uses`, what the call binds to from `--callees`, and the real target
+from `--expand=Z::f` on the module the alias or functor names, read by hand for the functor rows.
+
+| site | qualifier | outcome |
+|---|---|---|
+| `lru.ml:97` `LL.first` | alias `Linked_list` | right |
+| `xapi_pool.ml:2493` `Unixext.unlink_safe` | alias | right |
+| `test_network_sriov.ml:201` `T.create_physical_pif` | alias `Test_common` | right |
+| `xapi_caller.ml:157` `Caller_table.insert` | alias | right |
+| `test_pool_license.ml:91` `Date.to_rfc3339` | alias `Clock.Date` | right |
+| `test_xapi_xenops.ml:79` `Date.of_unix_time` | alias `Clock.Date` | right |
+| `xenops_server_simulator.ml:406` `DB.read_exn` | functor `TypedTable` (in corpus) | right |
+| `xapi_caller.ml:250` `Caller_statistics.get_token_count` | alias | right |
+| `gen_empty_custom.ml:132` `OU.ocaml_of_obj_name` | alias `Ocaml_utils` | right |
+| `test_timer.ml:64` `Timer.has_expired` | alias `Clock.Timer` | right |
+| `gen_rbac.ml:237` `DU.wire_name` | alias `Datamodel_utils` | right |
+| `test_rate_limit.ml:23` `Rate_limit.create` | alias | right |
+| `protocol_unix_scheduler.ml:39` `Int64Map.mem` | functor, stdlib `Map.Make` | refused (target outside corpus) |
+| `gen_c_binding.ml:93` `TypeSet.iter` | functor, stdlib `Set.Make` | refused (outside) |
+| `quicktest_event.ml:436` `StringSet.add` | functor, stdlib `Set.Make` | refused (outside) |
+| `gen_c_binding.ml:835` `StringSet.add` | functor, stdlib `Set.Make` | refused (outside) |
+| `http_svr.ml:327` `MethodMap.add` | functor, stdlib `Map.Make` | refused (outside) |
+| `xapi_vm.ml:735` `Rrdd.remove_rrd` | alias `Rrd_client.Client` | refused (no keyed definition found) |
+| `storage_smapiv1_migrate.ml:279` `State.remove_copy` | alias `Storage_migrate_helper.State` | refused, **though the target is in the corpus** (`storage_migrate_helper.ml:284`) |
+| `cert_distrib.ml:748` `CertMap.add` | functor, stdlib `Map.Make` | **wrong**: split across 8 unrelated `add`s in `ocaml/xapi/` |
+
+12 right, 7 refused, 1 wrong. Wilson 95% intervals on 20: wrong 0.9% to 23.6%, right 38.7% to
+78.1%. Over 3,478 sites that is roughly 30 to 820 wrong edges, so the sample bounds the problem
+without sizing it. Split by kind: 0 of 12 alias sites wrong (interval 0% to 24.3%), 1 of 8
+functor sites wrong (2.2% to 47.1%).
+
+Read with row 6: both wrong cases are functor-built modules, and both bind as a **split** across
+several same-named definitions, none of them the real one (row 6's `Varstore_guard.start` splits
+across four `start`s in `service.ml`). Stdlib `Map.Make` / `Set.Make` calls were refused four
+times out of five; the fifth split across eight `add`s in its own directory (why that one ladders
+and the others refuse was not traced). The alias sites bind right although nothing is keyed
+under the alias name either; how the ladder gets there was not traced.
+
+Harness note: `--uses` output is paged, so one site (`Caller_table.insert`) was not in the first
+page and was resolved through `--callees` on its enclosing function instead.
+
 ## Parser robustness issue
 
 The spike hit a robustness issue in the vendored grammar that can stop an index run. Real xen-api

@@ -5,13 +5,20 @@ Detail lives in `baseline-lookups.md`, `spike-definitions.md` and `upstream-rule
 
 ## Recommendation
 
-**Go, for definitions plus call edges, with one condition on the calls.** Both halves are now
-measured. Definitions are worth it outright. Call edges are worth it for qualifiers that name a
-file or a `module X = struct` (row 11: 19 of 19 callers right, where grep returns 179 hits).
-They are not safe for qualifiers that name a functor application or an alias (row 6: 2 of 3
-callers wrong), and xen-api has about 1,300 such modules. The condition: a qualified OCaml call
-whose qualifier keys nothing must be refused, not laddered. That is slice 6a, the maintainers'
-shared refusal, so it is the question to put on #377.
+**Go for definitions. Call edges: a provisional go, on a small sample.** Definitions are
+measured on 17 rows and worth it outright. Call edges rest on two hand-checked lookups plus a
+20-site sample of the risky path:
+
+- Row 11, qualifier naming a file module: 19 of 19 callers right (grep: 179 hits).
+- Row 6, qualifier naming a functor-built module: 2 of 3 callers wrong.
+- 20 random calls through functor-built or aliased modules (of 3,478): 12 right, 7 refused,
+  1 wrong. Both wrong cases so far are functor-built modules, binding as a split across unrelated
+  same-named definitions. The wrong rate is somewhere between 1% and 24% (95% interval), which
+  bounds the problem but does not size it.
+
+The condition for call edges stays: a qualified OCaml call whose qualifier keys nothing should
+be refused, not laddered. That is slice 6a, the maintainers' shared refusal, so it is the question
+to put on #377. A bigger sample, or a corpus-wide count, should come before claiming a rate.
 
 Nothing has been posted upstream. Whether and when to comment on #377 is Bruno's call.
 
@@ -44,7 +51,8 @@ Detail in `spike-definitions.md`, Callers: rows 6 and 11.
   keyed under it, the ref falls to the bare-name ladder, and on row 6 the ladder bound
   `Varstore_guard.start` and `Swtpm_guard.start` to `PV_Vnc.start`. 765 functor applications and
   520 aliases in `ocaml/*.ml` take the same path [ran it, line-shape grep, lower bound]. How many
-  of their calls bind wrongly rather than being declined was not measured.
+  of their calls bind wrongly rather than being declined: sampled, 1 of 20 wrong (see
+  `spike-definitions.md`, Sample).
 - Not captured at all: `|>` pipelines, functions passed as values, `M.( )` local opens. These
   are misses in the query, not wrong bindings; neither row hit one.
 - `--uses` lists every same-named call in a function that has a true edge, so its `p=` lines
